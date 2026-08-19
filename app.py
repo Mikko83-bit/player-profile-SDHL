@@ -16,7 +16,7 @@ try:
     players = df["Name?"].dropna().unique().tolist()
     selected_player = st.selectbox("Valitse pelaaja", players)
     
-    # Pelaajan vastaukset Excelistä
+    # Pelaajan rivi Excelissä
     p = df[df["Name?"] == selected_player].iloc[0]
 
     st.header(f"📊 Taitoprofiili: {selected_player}")
@@ -38,19 +38,33 @@ try:
     updated_scores = {}
 
     with col_sliders:
-        st.subheader("⚙️ Muokkaa / Tarkastele arvoja (1–10)")
+        st.subheader("⚙️ Arvot Excelistä (1–10)")
+        
         for label, col_name in categories.items():
-            # Haetaan oletusarvo Excelistä (jos puuttuu, käytetään 5)
-            val = p.get(col_name, 5)
-            default_val = int(val) if pd.notna(val) and isinstance(val, (int, float)) else 5
+            # Haetaan arvo Excelistä
+            raw_val = p.get(col_name, 5)
             
-            # Uniikki key varmistaa, että arvot päivittyvät kun pelaaja vaihtuu!
+            # Muunnetaan arvo varmasti puhtaaksi kokonaisluvuksi (1-10)
+            try:
+                clean_val = int(round(float(raw_val))) if pd.notna(raw_val) else 5
+                # Varmistetaan että arvo pysyy välillä 1–10
+                clean_val = max(1, min(10, clean_val))
+            except (ValueError, TypeError):
+                clean_val = 5
+
+            key_name = f"slider_{selected_player}_{label}"
+
+            # Jos pelaaja vaihtui, päivitetään uuden pelaajan arvo muistiin
+            if key_name not in st.session_state:
+                st.session_state[key_name] = clean_val
+
+            # Liukukytkin pakotetuilla kokonaisluvuilla (step=1)
             updated_scores[label] = st.slider(
                 label, 
                 min_value=1, 
                 max_value=10, 
-                value=default_val, 
-                key=f"{selected_player}_{label}"
+                step=1,
+                key=key_name
             )
 
     with col_chart:
