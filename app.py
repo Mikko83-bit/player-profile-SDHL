@@ -33,7 +33,6 @@ try:
         "Pelitapa": "How is your understanding of the team system?"
     }
 
-    # Luodaan kaksi saraketta: vasemmalle liukukytkimet (numerot), oikealle kaavio
     col_sliders, col_chart = st.columns([1, 1])
 
     updated_scores = {}
@@ -45,11 +44,16 @@ try:
             val = p.get(col_name, 5)
             default_val = int(val) if pd.notna(val) and isinstance(val, (int, float)) else 5
             
-            # Liukukytkin jokaiselle taitotasolle
-            updated_scores[label] = st.slider(label, min_value=1, max_value=10, value=default_val)
+            # Uniikki key varmistaa, että arvot päivittyvät kun pelaaja vaihtuu!
+            updated_scores[label] = st.slider(
+                label, 
+                min_value=1, 
+                max_value=10, 
+                value=default_val, 
+                key=f"{selected_player}_{label}"
+            )
 
     with col_chart:
-        # Tutkakaavio, joka käyttää liukukytkimien nykyisiä arvoja
         labels = list(updated_scores.keys())
         scores = list(updated_scores.values())
 
