@@ -1,70 +1,72 @@
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
-st.set_page_config(page_title="Pelaajaprofiilit - SDHL", page_icon="🏒")
+# Sivun asetukset
+st.set_page_config(page_title="Pelaajaprofiilit - SDHL", page_icon="🏒", layout="wide")
 st.title("🏒 Pelaajien kehitysprofiilit")
 
-# Sanakirja pelaajien tiedoista
-players_data = {
-    "Elsi": {
-        "skating": 6,
-        "shooting": 5,
-        "puck_control": 4,
-        "hockey_sense": 6,
-        "passing": 6,
-        "defense": 4,
-        "offense": 5,
-        "physical": 5,
-        "goals": "**1.** Liike kiekon kanssa & kiekon suojaus\n**2.** Laukaukset haastavista asennoista\n**3.** Aktiivinen puolustaminen"
-    },
-    "Pelaaja 2": {
-        "skating": 8,
-        "shooting": 7,
-        "puck_control": 6,
-        "hockey_sense": 7,
-        "passing": 7,
-        "defense": 6,
-        "offense": 8,
-        "physical": 6,
-        "goals": "**1.** Suoraviivaisuus hyökkäysalueella\n**2.** Aloitusten voittaminen\n**3.** Taklauspeli"
-    }
-}
 
-# Pelaajan valinta vetovalikosta
-selected_player = st.selectbox("Valitse pelaaja", list(players_data.keys()))
+# Ladataan data Excel-tiedostosta
+@st.cache_data
+def load_data():
+    return pd.read_excel("Player profile.xlsx")
 
-# Haetaan valitun pelaajan tiedot
-player_info = players_data[selected_player]
 
-st.header(f"1. Taitojen itsearviointi: {selected_player}")
-col1, col2 = st.columns(2)
+try:
+    df = load_data()
 
-with col1:
-    skating = st.slider("Luistelu", 1, 10, player_info["skating"])
-    shooting = st.slider("Laukaus", 1, 10, player_info["shooting"])
-    puck_control = st.slider("Kiekonhallinta", 1, 10, player_info["puck_control"])
-    hockey_sense = st.slider("Peliäly", 1, 10, player_info["hockey_sense"])
+    # Esitään nimen sisältävä sarake
+    name_col = next((col for col in ["Name", "Nimi", "Pelaaja"] if col in df.columns), None)
 
-with col2:
-    passing = st.slider("Syöttäminen", 1, 10, player_info["passing"])
-    defense = st.slider("Puolustuspeli", 1, 10, player_info["defense"])
-    offense = st.slider("Hyökkäyspeli", 1, 10, player_info["offense"])
-    physical = st.slider("Kamppailupeli", 1, 10, player_info["physical"])
+    if name_col:
+        # Pelaajan valinta vetovalikosta
+        players = df[name_col].dropna().unique().tolist()
+        selected_player = st.selectbox("Valitse pelaaja:", players)
 
-st.header("2. Yhteenveto (Radar Chart)")
-categories = [
-    "Luistelu", "Laukaus", "Kiekonhallinta", "Peliäly",
-    "Syöttäminen", "Puolustus", "Hyökkäys", "Kamppailu"
-]
-values = [
-    skating, shooting, puck_control, hockey_sense,
-    passing, defense, offense, physical
-]
+        # Suodatetaan valitun pelaajan rivi
+        player_data = df[df[name_col] == selected_player].iloc[0]
 
-df = pd.DataFrame(dict(r=values, theta=categories))
-fig = px.line_polar(df, r="r", theta="theta", line_close=True, range_r=[0, 10])
-st.plotly_chart(fig)
+        # Etsitään numeeriset arviointisarakkeet (kysymykset, joiden vastaus on numero 1-10)
+        rating_cols = []
+        for col in df.columns:
+            val = player_data[col]
+            if isinstance(val, (int, float)) and 1 <= val <= 10:
+                rating_cols.append(col)
 
-st.header("3. Kauden tavoitteet")
-st.write(player_info["goals"])
+        # Luodaan kaksi saraketta käyttöliittymään
+        col_left, col_right = st.columns([1, 1])
+
+        with col_left:
+            st.subheader(f"📊 Numerovastausten yhteenveto: {selected_player}")
+
+            if rating_cols:
+                # Lyhennetään pitkiä kysymysotsikoita kaaviota varten
+                short_labels = [c.split("?")[0][:25] + "..." if len(c) > 25 else c for c in rating_cols]
+                values = [player_data[c] for c in rating_cols]
+
+                # Tutkakaavio (Radar Chart)
+                df_radar = pd.DataFrame(dict(r=values, theta=short_labels))
+                fig = px.line_polar(df_radar, r="r", theta="theta", line_close=True, range_r=[0, 10])
+                fig.update_traces(fill="toself")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Pelaajalle ei löytynyt numeerisia arvioita (1–10).")
+
+        with col_right:
+            st.subheader("📋 Kaikki vastaukset ja kehityskohteet")
+            
+            # Näytetään sanalliset vastaukset ja kehityskohteet siististi
+            for col in df.columns:
+                if col != name_col:
+                    val = player_data[col]
+                    if pd.notna(val):
+                        st.markdown(f"**{col}**")
+                        st.write(val)
+                        st.divider()
+
+    else:
+        st.error("Excel-tiedostosta ei löytynyt 'Name'- tai 'Nimi'-saraketta.")
+
+except Exception as e:
+    st.error(f"Virhe ladattaessa Excel-tiedostoa: {e}")
