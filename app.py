@@ -16,10 +16,9 @@ try:
     players = df["Name?"].dropna().unique().tolist()
     selected_player = st.selectbox("Valitse pelaaja", players)
     
-    # Pelaajan vastaukset
+    # Pelaajan vastaukset Excelistä
     p = df[df["Name?"] == selected_player].iloc[0]
 
-    # 1. NUMEERISEN ARVIOINNIN MITTAARISTO
     st.header(f"📊 Taitoprofiili: {selected_player}")
     
     categories = {
@@ -34,14 +33,26 @@ try:
         "Pelitapa": "How is your understanding of the team system?"
     }
 
-    labels = []
-    scores = []
-    for label, col_name in categories.items():
-        if col_name in df.columns and pd.notna(p[col_name]):
-            labels.append(label)
-            scores.append(p[col_name])
+    # Luodaan kaksi saraketta: vasemmalle liukukytkimet (numerot), oikealle kaavio
+    col_sliders, col_chart = st.columns([1, 1])
 
-    if scores:
+    updated_scores = {}
+
+    with col_sliders:
+        st.subheader("⚙️ Muokkaa / Tarkastele arvoja (1–10)")
+        for label, col_name in categories.items():
+            # Haetaan oletusarvo Excelistä (jos puuttuu, käytetään 5)
+            val = p.get(col_name, 5)
+            default_val = int(val) if pd.notna(val) and isinstance(val, (int, float)) else 5
+            
+            # Liukukytkin jokaiselle taitotasolle
+            updated_scores[label] = st.slider(label, min_value=1, max_value=10, value=default_val)
+
+    with col_chart:
+        # Tutkakaavio, joka käyttää liukukytkimien nykyisiä arvoja
+        labels = list(updated_scores.keys())
+        scores = list(updated_scores.values())
+
         df_radar = pd.DataFrame(dict(r=scores, theta=labels))
         fig = px.line_polar(df_radar, r='r', theta='theta', line_close=True, range_r=[0, 10])
         fig.update_traces(fill='toself')
@@ -49,7 +60,7 @@ try:
 
     st.divider()
 
-    # 2. TAVOITTEET JA KEHITYSKOHTEET
+    # TAVOITTEET JA KEHITYSKOHTEET
     col1, col2 = st.columns(2)
 
     with col1:
@@ -59,18 +70,12 @@ try:
         st.subheader("🛡️ Peli ilman kiekkoa (3 tavoitetta)")
         st.info(p.get("Write down 3 specific skills/situations in the game without the puck", "Ei kirjauksia"))
 
+    with col2:
         st.subheader("🎯 Kauden tavoite")
         st.success(p.get("What is your goal for this season?", "Ei määritelty"))
 
-    with col2:
-        st.subheader("🔥 Urheilijan luonne & Työmoraali")
-        st.write(f"**Harjoittelu (1-10):** {p.get('How is your work ethic during practice?', '-')}")
-        st.write(f"**Pelit (1-10):** {p.get('How is your work ethic during games?', '-')}")
-        st.write(f"**Palautteen vastaanotto (1-10):** {p.get('How receptive are you to feedback?', '-')}")
-        
-        st.subheader("💬 Palaute ja kehitys")
-        st.write(f"**Miten käsittelee palautetta:** {p.get('How do you handle feedback (both positive and negative)?', '-')}")
-        st.write(f"**Valmistautuminen peleihin:** {p.get('How are your preparations around games?', '-')}")
+        st.subheader("💬 Palaute")
+        st.write(f"**Suhtautuminen palautteeseen:** {p.get('How do you handle feedback (both positive and negative)?', '-')}")
 
 except Exception as e:
     st.error(f"Virhe ladattaessa tietoja: {e}")
