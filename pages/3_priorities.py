@@ -3,9 +3,9 @@ import streamlit as st
 
 df = st.session_state.get("df")
 selected_player = st.session_state.get("selected_player")
+name_col = st.session_state.get("name_col", "Name")
 
 if df is not None and selected_player:
-    name_col = "Name?" if "Name?" in df.columns else df.columns[0]
     match = df[df[name_col].astype(str).str.strip() == str(selected_player)]
 
     if not match.empty:
@@ -13,56 +13,79 @@ if df is not None and selected_player:
 
         st.title(f"🎯 {selected_player} — Kehityskohteet & Tavoitteet")
 
+        # 1. PELI KIEKOLLA JA ILMAN KIEKKOA
         col_puck, col_no_puck = st.columns(2)
 
+        # Etsitään ruotsinkieliset pitkät otsikot sarakkeista
         puck_col = [
             c
             for c in df.columns
-            if "Write down 3 specific skills/situations in the game with the puck"
-            in c
+            if "Skriv ner 3 konkreta moment i spelet med puck" in str(c)
         ]
         no_puck_col = [
             c
             for c in df.columns
-            if "Write down 3 specific skills/situations in the game without the puck"
-            in c
-            or (
-                "Write down 3 specific skills/situations" in c
-                and c not in puck_col
-            )
+            if "Skriv ner 3 konkreta moment i spelet utan puck" in str(c)
         ]
 
         with col_puck:
-            st.subheader("🏒 Peli kiekolla (With Puck)")
+            st.subheader("🏒 Peli kiekolla (Med puck)")
             val_puck = (
                 p.get(puck_col[0], "Ei kirjauksia")
                 if puck_col
                 else "Ei kirjauksia"
             )
-            st.info(val_puck)
+            st.info(
+                val_puck
+                if pd.notna(val_puck) and str(val_puck) != "nan"
+                else "Ei kirjauksia"
+            )
 
         with col_no_puck:
-            st.subheader("🛡️ Peli ilman kiekkoa (Without Puck)")
+            st.subheader("🛡️ Peli ilman kiekkoa (Utan puck)")
             val_no_puck = (
                 p.get(no_puck_col[0], "Ei kirjauksia")
                 if no_puck_col
                 else "Ei kirjauksia"
             )
-            st.info(val_no_puck)
+            st.info(
+                val_no_puck
+                if pd.notna(val_no_puck) and str(val_no_puck) != "nan"
+                else "Ei kirjauksia"
+            )
 
         st.divider()
 
-        st.subheader("💬 Palaute ja haasteiden käsittely")
+        # 2. HAASTEET, PALAUTE JA TAVOITTEET
+        st.subheader("💬 Haasteet, palaute ja kauden tavoite")
 
-        st.write(
-            f"**Haasteet:** {p.get('How do you handle challenges during practices', p.get('How do you handle challenges?', '-'))}"
-        )
-        st.write(
-            f"**Vastaanottavaisuus:** {p.get('How receptive are you to feedback?', '-')}"
-        )
-        st.write(
-            f"**Palautteen käsittely:** {p.get('How do you handle feedback (both positive and negative)?', '-')}"
-        )
+        col_left, col_right = st.columns(2)
+
+        with col_left:
+            st.write("**Haasteiden käsittely harjoituksissa/peleissä:**")
+            st.write(
+                f"> {p.get('Hur hanterar du utmaningar vid träningar/match', '-')}"
+            )
+
+            st.write("**Vastaanottavaisuus palautteelle:**")
+            st.write(
+                f"> {p.get('Hur mottaglig är du för feedback?', '-')}"
+            )
+
+            st.write("**Palautteen käsittely (positiivinen & negatiivinen):**")
+            st.write(
+                f"> {p.get('Hur hanterar du feedback (negativ och positiv)?', '-')}"
+            )
+
+        with col_right:
+            st.write("**Kauden tavoite (Mål för säsongen):**")
+            goal_val = p.get("Vad är ditt mål med den här säsongen?", "-")
+            st.success(
+                goal_val
+                if pd.notna(goal_val) and str(goal_val) != "nan"
+                else "Ei asetettua tavoitetta"
+            )
+
     else:
         st.warning(f"Pelaajan '{selected_player}' tietoja ei löytynyt.")
 else:
