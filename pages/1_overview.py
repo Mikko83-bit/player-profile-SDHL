@@ -1,5 +1,5 @@
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 df = st.session_state.get("df")
@@ -9,7 +9,7 @@ if df is not None and selected_player:
     p = df[df[df.columns[0]] == selected_player].iloc[0]
 
     st.title(f"👤 {selected_player} — Perustiedot & Yleiskatsaus")
-    
+
     col_info, col_radar = st.columns([1, 1])
 
     with col_info:
@@ -19,7 +19,7 @@ if df is not None and selected_player:
         st.write(f"**Joukkue:** {p.get('Team', 'Luleå Hockey / MSK')}")
         st.write(f"**Syntymävuosi:** {p.get('Birth Year', '-')}")
         st.write(f"**Kätisyys:** {p.get('Shoots', '-')}")
-        
+
         st.divider()
         st.subheader("🎯 Kauden tavoite")
         st.success(p.get("What is your goal for this season?", "Ei määritelty"))
@@ -35,9 +35,9 @@ if df is not None and selected_player:
             "Puolustus": "How would you rate your defensive play?",
             "Hyökkäys": "How is your offensive play?",
             "Kamppailu": "How is your physical play?",
-            "Pelitapa": "How is your understanding of the team system?"
+            "Pelitapa": "How is your understanding of the team system?",
         }
-        
+
         scores = []
         labels = []
         for lbl, col in overview_cats.items():
@@ -47,6 +47,10 @@ if df is not None and selected_player:
             labels.append(lbl)
 
         df_radar = pd.DataFrame(dict(r=scores, theta=labels))
-        fig = px.line_polar(df_radar, r='r', theta='theta', line_close=True, range_r=[0, 10])
-        fig.update_traces(fill='toself', line_color='#E30613')
+        fig = px.line_polar(
+            df_radar, r="r", theta="theta", line_close=True, range_r=[0, 10]
+        )
+        fig.update_traces(fill="toself", line_color="#E30613")
         st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Valitse pelaaja vasemmasta sivupalkista.")
