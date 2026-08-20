@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -15,8 +16,31 @@ if df is not None and selected_player:
 
         st.title(f"👤 {selected_player} — Overview")
 
-        col_info, col_radar = st.columns([1, 1])
+        # Asettelu: 1 osa kuvalle, 2 osaa tiedoille, 2 osaa tutkakaaviolle
+        col_img, col_info, col_radar = st.columns([1, 2, 2])
 
+        # --- 1. PELAAJAKUVA ---
+        with col_img:
+            # Muutetaan nimi tiedostomuotoon (esim. "Maja Nylen" -> "Maja_Nylen")
+            formatted_name = selected_player.replace(" ", "_")
+            
+            # Etsitään sopivaa kuvaformaattia
+            img_found = False
+            for ext in [".png", ".jpg", ".jpeg", ".PNG", ".JPG"]:
+                img_path = os.path.join("images", f"{formatted_name}{ext}")
+                if os.path.exists(img_path):
+                    st.image(img_path, use_container_width=True)
+                    img_found = True
+                    break
+            
+            # Jos kuvaa ei löydy, näytetään paikkamerkki
+            if not img_found:
+                st.image(
+                    "https://via.placeholder.com/200x250.png?text=No+Image",
+                    use_container_width=True,
+                )
+
+        # --- 2. PERUSTIEDOT ---
         with col_info:
             st.subheader("PLAYER INFORMATION")
             st.write(f"**Name:** {selected_player}")
@@ -32,6 +56,7 @@ if df is not None and selected_player:
                 )
             )
 
+        # --- 3. TUTKAKAAVIO ---
         with col_radar:
             st.subheader("📊 Self-Assessment Radar")
             overview_cats = {
