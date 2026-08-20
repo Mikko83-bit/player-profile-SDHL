@@ -5,7 +5,6 @@ st.set_page_config(
     page_title="Luleå/MSSK - Spelarprofiler", page_icon="🏒", layout="wide"
 )
 
-# Tiedoston nimi täsmälleen Excelisi mukaan
 EXCEL_FILE = "Spelarprofil - Luleå_MSSK SDHL_U19D.xlsx"
 
 
@@ -18,27 +17,29 @@ try:
     df = load_data()
     st.session_state["df"] = df
 
-    # Tunnistetaan nimesarake (Name? tai ensimmäinen sarake)
+    # Tunnistetaan nimesarake
     name_col = "Name?" if "Name?" in df.columns else df.columns[0]
     df[name_col] = df[name_col].astype(str).str.strip()
 
     st.sidebar.title("🏒 Luleå/MSSK Profiler")
 
-    # Joukkueen suodatus (SDHL vs U19D)
+    # 1. JOUKKUEEN VALINTA
     if "Team" in df.columns:
         teams = ["Kaikki joukkueet"] + [
             str(t).strip() for t in df["Team"].dropna().unique()
         ]
-        selected_team = st.sidebar.selectbox("🏆 Valitse joukkue / Lag", teams)
+        selected_team = st.sidebar.selectbox("🏆 Valitse joukkue", teams)
 
         if selected_team != "Kaikki joukkueet":
-            df_filtered = df[df["Team"].astype(str).str.strip() == selected_team]
+            df_filtered = df[
+                df["Team"].astype(str).str.strip() == selected_team
+            ]
         else:
             df_filtered = df
     else:
         df_filtered = df
 
-    # Pelaajavalikko suodatetun listan mukaan
+    # 2. PELAAJAN VALINTA (Suodatettu joukkueen mukaan)
     players = [
         p
         for p in df_filtered[name_col].unique()
@@ -48,7 +49,7 @@ try:
 
     st.session_state["selected_player"] = selected_player
 
-    # Navigaatiorakenne
+    # Sivujen navigaatio
     overview_page = st.Page(
         "pages/1_overview.py", title="Perustiedot & Yleiskatsaus", icon="👤"
     )
@@ -66,7 +67,7 @@ try:
 
 except FileNotFoundError:
     st.error(
-        f"❌ Tiedostoa '{EXCEL_FILE}' ei löytynyt projektin juurikansiosta. Varmista että tiedoston nimi ja pääte ovat täsmälleen oikein GitHubissa."
+        f"❌ Tiedostoa '{EXCEL_FILE}' ei löytynyt juurikansiosta. Varmista että tiedosto on tallennettu nimellä '{EXCEL_FILE}'."
     )
 except Exception as e:
     st.error(f"Virhe ladattaessa tietoja: {e}")
