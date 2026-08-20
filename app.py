@@ -17,29 +17,30 @@ try:
     df = load_data()
     st.session_state["df"] = df
 
-    # Tunnistetaan nimesarake
-    name_col = "Name?" if "Name?" in df.columns else df.columns[0]
+    # Tunnistetaan joukkue- ja nimisarakkeet otsikkokuvan perusteella
+    team_col = "TEAM" if "TEAM" in df.columns else df.columns[0]
+    name_col = "Name" if "Name" in df.columns else df.columns[2]
+
+    # Puhdistetaan merkkijonot
+    df[team_col] = df[team_col].astype(str).str.strip()
     df[name_col] = df[name_col].astype(str).str.strip()
 
     st.sidebar.title("🏒 Luleå/MSSK Profiler")
 
-    # 1. JOUKKUEEN VALINTA
-    if "Team" in df.columns:
-        teams = ["Kaikki joukkueet"] + [
-            str(t).strip() for t in df["Team"].dropna().unique()
-        ]
-        selected_team = st.sidebar.selectbox("🏆 Valitse joukkue", teams)
+    # 1. Joukkueen valinta
+    teams = ["Kaikki joukkueet"] + [
+        t
+        for t in df[team_col].dropna().unique()
+        if t and t != "nan" and t != "None"
+    ]
+    selected_team = st.sidebar.selectbox("🏆 Valitse joukkue", teams)
 
-        if selected_team != "Kaikki joukkueet":
-            df_filtered = df[
-                df["Team"].astype(str).str.strip() == selected_team
-            ]
-        else:
-            df_filtered = df
+    if selected_team != "Kaikki joukkueet":
+        df_filtered = df[df[team_col] == selected_team]
     else:
         df_filtered = df
 
-    # 2. PELAAJAN VALINTA (Suodatettu joukkueen mukaan)
+    # 2. Pelaajan valinta
     players = [
         p
         for p in df_filtered[name_col].unique()
@@ -48,8 +49,10 @@ try:
     selected_player = st.sidebar.selectbox("👤 Valitse pelaaja", players)
 
     st.session_state["selected_player"] = selected_player
+    st.session_state["name_col"] = name_col
+    st.session_state["team_col"] = team_col
 
-    # Sivujen navigaatio
+    # Navigaatio
     overview_page = st.Page(
         "pages/1_overview.py", title="Perustiedot & Yleiskatsaus", icon="👤"
     )
@@ -66,8 +69,6 @@ try:
     pg.run()
 
 except FileNotFoundError:
-    st.error(
-        f"❌ Tiedostoa '{EXCEL_FILE}' ei löytynyt juurikansiosta. Varmista että tiedosto on tallennettu nimellä '{EXCEL_FILE}'."
-    )
+    st.error(f"❌ Tiedostoa '{EXCEL_FILE}' ei löytynyt juurikansiosta.")
 except Exception as e:
     st.error(f"Virhe ladattaessa tietoja: {e}")
