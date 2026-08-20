@@ -4,9 +4,10 @@ import streamlit as st
 
 df = st.session_state.get("df")
 selected_player = st.session_state.get("selected_player")
+name_col = st.session_state.get("name_col", "Name")
+team_col = st.session_state.get("team_col", "TEAM")
 
 if df is not None and selected_player:
-    name_col = "Name?" if "Name?" in df.columns else df.columns[0]
     match = df[df[name_col].astype(str).str.strip() == str(selected_player)]
 
     if not match.empty:
@@ -19,16 +20,14 @@ if df is not None and selected_player:
         with col_info:
             st.subheader("PLAYER INFORMATION")
             st.write(f"**Nimi:** {selected_player}")
-            st.write(f"**Pelipaikka:** {p.get('Position', '-')}")
-            st.write(f"**Joukkue:** {p.get('Team', 'Luleå Hockey / MSK')}")
-            st.write(f"**Syntymävuosi:** {p.get('Birth Year', '-')}")
-            st.write(f"**Kätisyys:** {p.get('Shoots', '-')}")
+            st.write(f"**Numero:** {p.get('Nummer?', '-')}")
+            st.write(f"**Joukkue:** {p.get(team_col, '-')}")
 
             st.divider()
             st.subheader("🎯 Kauden tavoite")
             st.success(
                 p.get(
-                    "What is your goal for this season?",
+                    "Vad är ditt mål med den här säsongen?",
                     "Ei määritelty kauden tavoitetta.",
                 )
             )
@@ -36,15 +35,15 @@ if df is not None and selected_player:
         with col_radar:
             st.subheader("📊 Self-Assessment Overview")
             overview_cats = {
-                "Luistelu": "How would you rate your skating?",
-                "Laukaus": "How would you rate your shot?",
-                "Kiekonhallinta": "How would you rate your puck handling/control",
-                "Peliäly": "How would you rate your hockey sense?",
-                "Syöttäminen": "How would you rate your passing and receiving",
-                "Puolustus": "How would you rate your defensive play?",
-                "Hyökkäys": "How is your offensive play?",
-                "Kamppailu": "How is your physical play?",
-                "Pelitapa": "How is your understanding of the team system",
+                "Luistelu": "Hur är din skridskoåkning?",
+                "Laukaus": "Hur är ditt skott?",
+                "Kiekonhallinta": "Hur är din puckföring/puckkontroll?",
+                "Peliäly": "Hur är din spelförståelse?",
+                "Syöttäminen": "Hur är din kvalitet i passning/mottagning?",
+                "Puolustus": "Hur är din kvalitet i försvarsspelet?",
+                "Hyökkäys": "Hur är din kvalitet i anfallsspelet?",
+                "Kamppailu": "Hur är din kvalitet i det fysiska spelet?",
+                "Pelitapa": "Hur är din förståelse för spelsystemet?",
             }
 
             scores = []
