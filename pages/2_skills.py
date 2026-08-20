@@ -24,8 +24,8 @@ def render_skill_block(label, score_col, str_col, dev_col, p, player_name):
         key=f"sk_{player_name}_{label}_{score_col[:10]}",
     )
 
-    st.caption(f"💪 **Vahvuudet:** {p.get(str_col, 'Ei kirjauksia')}")
-    st.caption(f"🎯 **Kehitettävää:** {p.get(dev_col, 'Ei kirjauksia')}")
+    st.caption(f"💪 **Strengths:** {p.get(str_col, 'No entries')}")
+    st.caption(f"🎯 **To Develop:** {p.get(dev_col, 'No entries')}")
     st.write("---")
 
 
@@ -35,13 +35,13 @@ if df is not None and selected_player:
     if not match.empty:
         p = match.iloc[0]
 
-        st.title(f"📊 {selected_player} — Taidot & Peliesitys")
+        st.title(f"📊 {selected_player} — Skills & Performance")
 
         tab1, tab2, tab3 = st.tabs(
             [
-                "🛠️ Tekniset Taidot",
-                "🧠 Taktiset Taidot & Peliäly",
-                "💪 Arjen Standardit",
+                "🛠️ Technical Skills",
+                "🧠 Tactical & Hockey Sense",
+                "💪 Daily Standards",
             ]
         )
 
@@ -49,25 +49,25 @@ if df is not None and selected_player:
             st.subheader("TECHNICAL SKILLS")
             tech_skills = [
                 (
-                    "Luistelu",
+                    "Skating",
                     "Hur är din skridskoåkning?",
                     "Vad är du bra på?",
                     "Vad behöver du utveckla?",
                 ),
                 (
-                    "Laukaus",
+                    "Shooting",
                     "Hur är ditt skott?",
                     "Vad är du bra på? 2",
                     "Vad behöver du utveckla? 2",
                 ),
                 (
-                    "Kiekonhallinta",
+                    "Puck Handling",
                     "Hur är din puckföring/puckkontroll?",
                     "Vad är du bra på? 3",
                     "Vad behöver du utveckla? 3",
                 ),
                 (
-                    "Syöttäminen",
+                    "Passing & Receiving",
                     "Hur är din kvalitet i passning/mottagning?",
                     "Vad är du bra på? 5",
                     "Vad behöver du utveckla? 5",
@@ -88,31 +88,31 @@ if df is not None and selected_player:
             st.subheader("TACTICAL SKILLS & GAME UNDERSTANDING")
             tactical_skills = [
                 (
-                    "Peliäly",
+                    "Hockey Sense",
                     "Hur är din spelförståelse?",
                     "Vad är du bra på? 4",
                     "Vad behöver du utveckla? 4",
                 ),
                 (
-                    "Puolustus",
+                    "Defensive Play",
                     "Hur är din kvalitet i försvarsspelet?",
                     "Vad är du bra på? 6",
                     "Vad behöver du utveckla? 6",
                 ),
                 (
-                    "Hyökkäys",
+                    "Offensive Play",
                     "Hur är din kvalitet i anfallsspelet?",
                     "Vad är jag bra på?",
                     "Vad behöver du utveckla? 7",
                 ),
                 (
-                    "Kamppailu",
+                    "Physical Play",
                     "Hur är din kvalitet i det fysiska spelet?",
                     "Vad är jag bra på? 2",
                     "Vad behöver du utveckla? 8",
                 ),
                 (
-                    "Pelitapa",
+                    "Understanding System",
                     "Hur är din förståelse för spelsystemet?",
                     "Vilka moment hanterar jag bra?",
                     "Vilka moment behöver jag utveckla?",
@@ -133,25 +133,25 @@ if df is not None and selected_player:
             st.subheader("DAILY STANDARDS & PREPARATIONS")
             char_map = [
                 (
-                    "Työmoraali harjoituksissa",
+                    "Work Ethic (Practice)",
                     "Hur är din arbetsmoral vid träning?",
                     "Vad gör du bra?",
                     "Vad behöver du utveckla? 9",
                 ),
                 (
-                    "Työmoraali peleissä",
+                    "Work Ethic (Games)",
                     "Hur är din arbetsmoral vid match?",
                     "Vad gör du bra? 2",
                     "Vad behöver du utveckla? 10",
                 ),
                 (
-                    "Valmistautuminen harjoituksiin",
+                    "Preparation (Practice)",
                     "Hur är dina förberedelser runt träning?",
                     "Vad gör du bra? 3",
                     "Vad behöver du utveckla? 11",
                 ),
                 (
-                    "Valmistautuminen peleihin",
+                    "Preparation (Games)",
                     "Hur är dina förberedelser runt match?",
                     "Vad gör du bra? 4",
                     "Vad behöver du utveckla? 12",
@@ -168,6 +168,6 @@ if df is not None and selected_player:
                         label, score_col, str_col, dev_col, p, selected_player
                     )
     else:
-        st.warning(f"Pelaajan '{selected_player}' tietoja ei löytynyt.")
+        st.warning(f"Data for player '{selected_player}' was not found.")
 else:
-    st.info("Valitse pelaaja sivupalkista.")
+    st.info("Please select a player from the sidebar.")
