@@ -51,7 +51,7 @@ if df is not None and selected_player:
 
         # Excelin sarake AT on indeksi 45 (A=0, Z=25, AA=26, AT=45)
         # Oletetaan "Vad gör du bra?" = AT (45) ja "Vad behöver du utveckla?" = AU (46)
-        COL_AT_INDEX = 45
+        COL_AT_INDEX = 44
 
         val_good = p.iloc[COL_AT_INDEX] if len(p) > COL_AT_INDEX else "-"
         val_dev = p.iloc[COL_AT_INDEX + 1] if len(p) > (COL_AT_INDEX + 1) else "-"
