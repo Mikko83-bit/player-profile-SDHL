@@ -61,7 +61,7 @@ if df is not None and selected_player:
         with col_left:
             st.write("**Handling Challenges in Practices/Games:**")
             st.write(
-                f"> {p.get('Hur hanterar du utmaningar vid träningar/match', '-')}"
+                f"> {p.get('Hur hanterar du utmaningar vid träningar/matcher?', '-')}"
             )
 
             st.write("**Receptiveness to Feedback:**")
