@@ -14,6 +14,10 @@ if df is not None and selected_player:
     if not match.empty:
         p = match.iloc[0]
 
+        # Tunnistetaan pelaajan joukkue
+        player_team = str(p.get(team_col, "U19D")).upper()
+        is_sdhl = "SDHL" in player_team
+
         st.title(f"👤 {selected_player} — Overview")
 
         col_img, col_info, col_radar = st.columns([1, 2, 2.5])
@@ -46,7 +50,7 @@ if df is not None and selected_player:
                 else p.get("Nummer?", "-")
             )
             st.write(f"**Number:** {num_val}")
-            st.write(f"**Team:** {p.get(team_col, 'Luleå U19D')}")
+            st.write(f"**Team:** {p.get(team_col, 'Luleå Hockey')}")
 
             st.divider()
             st.subheader("🎯 Season Goal")
@@ -58,11 +62,22 @@ if df is not None and selected_player:
             )
             st.success(goal_val)
 
-        # --- 3. TUTKAKAAVIO VERTAILULLA (U19D & SDHL) ---
+        # --- 3. TUTKAKAAVIO VERTAILULLA (SDHL & U19D) ---
         with col_radar:
             st.subheader("📊 Self-Assessment Radar")
 
-            # Määritetään kategoriat, hakusanat Excel-sarakkeille sekä SDHL-joukkueen kiinteät keskiarvot kuvan mukaisesti
+            # Valitaan oletuksena vertailuun pelaajan oma joukkue
+            default_benchmarks = (
+                ["SDHL Average"] if is_sdhl else ["U19D Average"]
+            )
+
+            show_benchmarks = st.multiselect(
+                "Compare with:",
+                options=["U19D Average", "SDHL Average"],
+                default=default_benchmarks,
+            )
+
+            # SDHL-joukkueen kiinteät keskiarvot kuvan mukaisesti
             categories_data = {
                 "Skating": {
                     "keywords": ["skating", "skridskoåkning"],
@@ -108,11 +123,19 @@ if df is not None and selected_player:
             u19d_averages = []
             sdhl_averages = []
 
+            # Lasketaan U19D-joukkueen keskiarvo datasta (rajaten U19D-pelaajiin jos joukkuesarake löytyy)
+            u19d_df = (
+                df[df[team_col].astype(str).str.contains("U19", case=False)]
+                if team_col in df.columns
+                else df
+            )
+            if u19d_df.empty:
+                u19d_df = df
+
             for cat_name, info in categories_data.items():
                 keywords = info["keywords"]
                 sdhl_averages.append(info["sdhl"])
 
-                # Etsitään oikea sarake df:stä hakusanojen avulla
                 matched_col = None
                 for col in df.columns:
                     col_str = str(col).lower()
@@ -128,12 +151,14 @@ if df is not None and selected_player:
                     except (ValueError, TypeError):
                         p_score = 5.0
 
-                    # U19D Joukkueen keskiarvo ladatusta datasta
-                    col_numeric = pd.to_numeric(
-                        df[matched_col], errors="coerce"
+                    # U19D keskiarvo
+                    col_numeric_u19 = pd.to_numeric(
+                        u19d_df[matched_col], errors="coerce"
                     ).dropna()
                     u19_avg = (
-                        col_numeric.mean() if not col_numeric.empty else 5.0
+                        col_numeric_u19.mean()
+                        if not col_numeric_u19.empty
+                        else 5.0
                     )
                 else:
                     p_score = 5.0
@@ -142,47 +167,47 @@ if df is not None and selected_player:
                 player_scores.append(round(p_score, 1))
                 u19d_averages.append(round(u19_avg, 2))
 
-            # Suljetaan ympyrä Plotly-tutkakaaviota varten
+            # Suljetaan ympyrä
             labels_closed = labels + [labels[0]]
             player_scores_closed = player_scores + [player_scores[0]]
             u19d_averages_closed = u19d_averages + [u19d_averages[0]]
             sdhl_averages_closed = sdhl_averages + [sdhl_averages[0]]
 
-            # Luodaan Plotly-graafi
             fig = go.Figure()
 
-            # 1. SDHL Average (Harmaa katkoviiva)
-            fig.add_trace(
-                go.Scatterpolar(
-                    r=sdhl_averages_closed,
-                    theta=labels_closed,
-                    name="SDHL Average",
-                    line=dict(color="#A0A0A0", width=2, dash="dashdot"),
-                    fill="none",
+            # 1. SDHL Average - Valkoinen/Harmaa katkoviiva
+            if "SDHL Average" in show_benchmarks:
+                fig.add_trace(
+                    go.Scatterpolar(
+                        r=sdhl_averages_closed,
+                        theta=labels_closed,
+                        name="SDHL Average",
+                        line=dict(color="#E0E0E0", width=2, dash="dot"),
+                        fill="none",
+                    )
                 )
-            )
 
-            # 2. U19D Average (Sininen katkoviiva)
-            fig.add_trace(
-                go.Scatterpolar(
-                    r=u19d_averages_closed,
-                    theta=labels_closed,
-                    fill="toself",
-                    name="U19D Average",
-                    line=dict(color="#4A90E2", width=2, dash="dash"),
-                    fillcolor="rgba(74, 144, 226, 0.2)",
+            # 2. U19D Average - Sininen katkoviiva
+            if "U19D Average" in show_benchmarks:
+                fig.add_trace(
+                    go.Scatterpolar(
+                        r=u19d_averages_closed,
+                        theta=labels_closed,
+                        name="U19D Average",
+                        line=dict(color="#38B6FF", width=2, dash="dash"),
+                        fill="none",
+                    )
                 )
-            )
 
-            # 3. Valitun pelaajan omat pisteet (Punainen täyttö + paksu viiva)
+            # 3. Pelaaja (Vain tällä on täyttöväri)
             fig.add_trace(
                 go.Scatterpolar(
                     r=player_scores_closed,
                     theta=labels_closed,
                     fill="toself",
-                    name=selected_player,
+                    name=f"{selected_player} ({'SDHL' if is_sdhl else 'U19D'})",
                     line=dict(color="#E30613", width=3),
-                    fillcolor="rgba(227, 6, 19, 0.45)",
+                    fillcolor="rgba(227, 6, 19, 0.35)",
                 )
             )
 
@@ -192,11 +217,11 @@ if df is not None and selected_player:
                         visible=True,
                         range=[0, 10],
                         dtick=2,
-                        gridcolor="#444444",
+                        gridcolor="#333333",
                         tickfont=dict(color="white"),
                     ),
                     angularaxis=dict(
-                        gridcolor="#444444",
+                        gridcolor="#333333",
                         tickfont=dict(color="white", size=11),
                     ),
                     bgcolor="rgba(0,0,0,0)",
@@ -212,7 +237,7 @@ if df is not None and selected_player:
                     x=0.5,
                     font=dict(color="white", size=11),
                 ),
-                margin=dict(l=40, r=40, t=20, b=40),
+                margin=dict(l=40, r=40, t=10, b=40),
             )
 
             st.plotly_chart(fig, use_container_width=True)
