@@ -58,33 +58,60 @@ if df is not None and selected_player:
             )
             st.success(goal_val)
 
-        # --- 3. TUTKAKAAVIO VERTAILULLA (U19D) ---
+        # --- 3. TUTKAKAAVIO VERTAILULLA (U19D & SDHL) ---
         with col_radar:
             st.subheader("📊 Self-Assessment Radar")
 
-            # Määritetään kategoriat ja etsitään oikea sarake otsikon perusteella
-            # Kokeillaan sekä englannin- että ruotsinkielisiä hakusanoja sarakkeista
-            categories_search = {
-                "Skating": ["skating", "skridskoåkning"],
-                "Shooting": ["shot", "skott"],
-                "Puck Control": [
-                    "puck handling",
-                    "puckkontroll",
-                    "puckföring",
-                ],
-                "Hockey Sense": ["game sense", "spelförståelse"],
-                "Passing": ["passing", "passning"],
-                "Defense": ["defensive play", "försvarsspelet"],
-                "Offense": ["offensive play", "anfallsspelet"],
-                "Physical Play": ["physical play", "fysiska spelet"],
-                "Team System": ["playbook", "spelsystemet"],
+            # Määritetään kategoriat, hakusanat Excel-sarakkeille sekä SDHL-joukkueen kiinteät keskiarvot kuvan mukaisesti
+            categories_data = {
+                "Skating": {
+                    "keywords": ["skating", "skridskoåkning"],
+                    "sdhl": 6.37,
+                },
+                "Shooting": {"keywords": ["shot", "skott"], "sdhl": 5.74},
+                "Puck Control": {
+                    "keywords": [
+                        "puck handling",
+                        "puckkontroll",
+                        "puckföring",
+                    ],
+                    "sdhl": 5.68,
+                },
+                "Hockey Sense": {
+                    "keywords": ["game sense", "spelförståelse"],
+                    "sdhl": 7.26,
+                },
+                "Passing": {
+                    "keywords": ["passing", "passning"],
+                    "sdhl": 6.58,
+                },
+                "Defense": {
+                    "keywords": ["defensive play", "försvarsspelet"],
+                    "sdhl": 6.26,
+                },
+                "Offense": {
+                    "keywords": ["offensive play", "anfallsspelet"],
+                    "sdhl": 6.16,
+                },
+                "Physical Play": {
+                    "keywords": ["physical play", "fysiska spelet"],
+                    "sdhl": 6.05,
+                },
+                "Team System": {
+                    "keywords": ["playbook", "spelsystemet"],
+                    "sdhl": 7.37,
+                },
             }
 
-            labels = list(categories_search.keys())
+            labels = list(categories_data.keys())
             player_scores = []
-            team_averages = []
+            u19d_averages = []
+            sdhl_averages = []
 
-            for cat_name, keywords in categories_search.items():
+            for cat_name, info in categories_data.items():
+                keywords = info["keywords"]
+                sdhl_averages.append(info["sdhl"])
+
                 # Etsitään oikea sarake df:stä hakusanojen avulla
                 matched_col = None
                 for col in df.columns:
@@ -101,39 +128,53 @@ if df is not None and selected_player:
                     except (ValueError, TypeError):
                         p_score = 5.0
 
-                    # Koko joukkueen puhtaat numeeriset arvot ja keskiarvo
+                    # U19D Joukkueen keskiarvo ladatusta datasta
                     col_numeric = pd.to_numeric(
                         df[matched_col], errors="coerce"
                     ).dropna()
-                    t_avg = col_numeric.mean() if not col_numeric.empty else 5.0
+                    u19_avg = (
+                        col_numeric.mean() if not col_numeric.empty else 5.0
+                    )
                 else:
                     p_score = 5.0
-                    t_avg = 5.0
+                    u19_avg = 5.0
 
                 player_scores.append(round(p_score, 1))
-                team_averages.append(round(t_avg, 2))
+                u19d_averages.append(round(u19_avg, 2))
 
             # Suljetaan ympyrä Plotly-tutkakaaviota varten
             labels_closed = labels + [labels[0]]
             player_scores_closed = player_scores + [player_scores[0]]
-            team_averages_closed = team_averages + [team_averages[0]]
+            u19d_averages_closed = u19d_averages + [u19d_averages[0]]
+            sdhl_averages_closed = sdhl_averages + [sdhl_averages[0]]
 
             # Luodaan Plotly-graafi
             fig = go.Figure()
 
-            # 1. Koko U19D-joukkueen keskiarvo (Harmaa täyttö + katkoviiva)
+            # 1. SDHL Average (Harmaa katkoviiva)
             fig.add_trace(
                 go.Scatterpolar(
-                    r=team_averages_closed,
+                    r=sdhl_averages_closed,
+                    theta=labels_closed,
+                    name="SDHL Average",
+                    line=dict(color="#A0A0A0", width=2, dash="dashdot"),
+                    fill="none",
+                )
+            )
+
+            # 2. U19D Average (Sininen katkoviiva)
+            fig.add_trace(
+                go.Scatterpolar(
+                    r=u19d_averages_closed,
                     theta=labels_closed,
                     fill="toself",
                     name="U19D Average",
                     line=dict(color="#4A90E2", width=2, dash="dash"),
-                    fillcolor="rgba(74, 144, 226, 0.25)",
+                    fillcolor="rgba(74, 144, 226, 0.2)",
                 )
             )
 
-            # 2. Valitun pelaajan omat pisteet (Punainen täyttö + paksu viiva)
+            # 3. Valitun pelaajan omat pisteet (Punainen täyttö + paksu viiva)
             fig.add_trace(
                 go.Scatterpolar(
                     r=player_scores_closed,
@@ -152,9 +193,16 @@ if df is not None and selected_player:
                         range=[0, 10],
                         dtick=2,
                         gridcolor="#444444",
+                        tickfont=dict(color="white"),
                     ),
-                    angularaxis=dict(gridcolor="#444444"),
+                    angularaxis=dict(
+                        gridcolor="#444444",
+                        tickfont=dict(color="white", size=11),
+                    ),
+                    bgcolor="rgba(0,0,0,0)",
                 ),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
                 showlegend=True,
                 legend=dict(
                     orientation="h",
@@ -162,6 +210,7 @@ if df is not None and selected_player:
                     y=-0.25,
                     xanchor="center",
                     x=0.5,
+                    font=dict(color="white", size=11),
                 ),
                 margin=dict(l=40, r=40, t=20, b=40),
             )
