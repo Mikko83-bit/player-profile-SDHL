@@ -57,7 +57,7 @@ if df is not None and selected_player:
 
             goal_val = (
                 p.iloc[46]
-                if len(p) > 46 and pd.notna(p.iloc[46])
+                if len(p) > 49 and pd.notna(p.iloc[46])
                 else "No goal defined."
             )
             st.success(goal_val)
