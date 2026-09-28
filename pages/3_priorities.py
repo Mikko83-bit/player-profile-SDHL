@@ -13,21 +13,14 @@ if df is not None and selected_player:
 
         st.title(f"🎯 {selected_player} — Development & Goals")
 
-        # --- 1. Game With Puck / Without Puck ---
+        # --- 1. Game With Puck / Without Puck (Sarakkeet 30 ja 31) ---
         col_puck, col_no_puck = st.columns(2)
 
-        puck_col = [
-            c for c in df.columns
-            if "skriv ner 3 konkreta moment i spelet med puck" in str(c).lower()
-        ]
-        no_puck_col = [
-            c for c in df.columns
-            if "skriv ner 3 konkreta moment i spelet utan puck" in str(c).lower()
-        ]
+        val_puck = p.iloc[30] if len(p) > 30 else "No entries"
+        val_no_puck = p.iloc[31] if len(p) > 31 else "No entries"
 
         with col_puck:
             st.subheader("🏒 Game With Puck")
-            val_puck = p.get(puck_col[0], "No entries") if puck_col else "No entries"
             st.info(
                 val_puck
                 if pd.notna(val_puck) and str(val_puck).strip() not in ["nan", ""]
@@ -36,7 +29,6 @@ if df is not None and selected_player:
 
         with col_no_puck:
             st.subheader("🛡️ Game Without Puck")
-            val_no_puck = p.get(no_puck_col[0], "No entries") if no_puck_col else "No entries"
             st.info(
                 val_no_puck
                 if pd.notna(val_no_puck) and str(val_no_puck).strip() not in ["nan", ""]
@@ -45,15 +37,14 @@ if df is not None and selected_player:
 
         st.divider()
 
-        # --- 2. Strengths & Areas to Develop (Kolumn AS = 44, AT = 45) ---
+        # --- 2. Strengths & Areas to Develop ---
+        # Käytetään sarakkeita 42 ("Vad gör du bra? 4") ja 43 ("Vad behöver du utveckla? 12")
+        # (Jos haluat ottaa mieluummin sarakkeet 33 ja 34, vaihda indeksit: 33 ja 34)
         st.subheader("⭐ Strengths & Areas to Develop")
         col_good, col_dev = st.columns(2)
 
-        # Excel AS = index 44, AT = index 45
-        COL_AS_INDEX = 44
-
-        val_good = p.iloc[COL_AS_INDEX] if len(p) > COL_AS_INDEX else "-"
-        val_dev = p.iloc[COL_AS_INDEX + 1] if len(p) > (COL_AS_INDEX + 1) else "-"
+        val_good = p.iloc[42] if len(p) > 42 else "-"
+        val_dev = p.iloc[43] if len(p) > 43 else "-"
 
         with col_good:
             st.write("**What You Do Well:**")
@@ -69,38 +60,34 @@ if df is not None and selected_player:
 
         st.divider()
 
-        # --- 3. Feedback, Challenges & Season Goal ---
+        # --- 3. Feedback, Challenges & Season Goal (Sarakkeet 44, 45, 46, 47) ---
         st.subheader("💬 Feedback, Challenges & Season Goal")
 
         col_left, col_right = st.columns(2)
 
-        utmaning_col = [c for c in df.columns if "utmaningar" in str(c).lower()]
-        mottaglig_col = [c for c in df.columns if "mottaglig" in str(c).lower()]
-        feedback_col = [c for c in df.columns if "negativ och positiv" in str(c).lower()]
-        goal_col = [c for c in df.columns if "mål med den här säsongen" in str(c).lower()]
+        val_utmaning = p.iloc[44] if len(p) > 44 else "-"
+        val_mottaglig = p.iloc[45] if len(p) > 45 else "-"
+        val_feedback = p.iloc[46] if len(p) > 46 else "-"
+        goal_val = p.iloc[47] if len(p) > 47 else "No goal set."
 
         with col_left:
             st.write("**Handling Challenges in Practices/Games:**")
-            val_utmaning = p.get(utmaning_col[0], "-") if utmaning_col else "-"
             st.write(
                 f"> {val_utmaning if pd.notna(val_utmaning) and str(val_utmaning).strip() not in ['nan', ''] else '-'}"
             )
 
             st.write("**Receptiveness to Feedback:**")
-            val_mottaglig = p.get(mottaglig_col[0], "-") if mottaglig_col else "-"
             st.write(
                 f"> {val_mottaglig if pd.notna(val_mottaglig) and str(val_mottaglig).strip() not in ['nan', ''] else '-'}"
             )
 
             st.write("**Handling Feedback (Positive & Negative):**")
-            val_feedback = p.get(feedback_col[0], "-") if feedback_col else "-"
             st.write(
                 f"> {val_feedback if pd.notna(val_feedback) and str(val_feedback).strip() not in ['nan', ''] else '-'}"
             )
 
         with col_right:
             st.write("**Season Goal:**")
-            goal_val = p.get(goal_col[0], "No goal set.") if goal_col else "No goal set."
             st.success(
                 goal_val
                 if pd.notna(goal_val) and str(goal_val).strip() not in ["nan", ""]
@@ -111,5 +98,3 @@ if df is not None and selected_player:
         st.warning(f"Data for player '{selected_player}' was not found.")
 else:
     st.info("Please select a player from the sidebar.")
-# Tulostaa kaikki DataFrame-sarakkeiden nimet näytölle
-st.write("Datan sarakkeet:", list(df.columns))
