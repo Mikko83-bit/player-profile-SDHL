@@ -111,3 +111,5 @@ if df is not None and selected_player:
         st.warning(f"Data for player '{selected_player}' was not found.")
 else:
     st.info("Please select a player from the sidebar.")
+# Tulostaa kaikki DataFrame-sarakkeiden nimet näytölle
+st.write("Datan sarakkeet:", list(df.columns))
