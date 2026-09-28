@@ -1,7 +1,5 @@
 from io import BytesIO
 import pandas as pd
-
-# --- PPTX LIB IMPORTS ---
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
@@ -20,8 +18,18 @@ def load_data():
     return pd.read_excel(EXCEL_FILE)
 
 
-# --- PPTX GENERATOR FUNKTIO ---
-def create_player_ppt(player_name, season_goal):
+# --- PPTX GENERATOR FUNKTIO (Pelaajakohtaiset vastaukset) ---
+def create_player_ppt(
+    player_name,
+    season_goal,
+    off_zone,
+    def_zone,
+    mental,
+    technical,
+    tactical,
+    off_ice,
+    daily_train,
+):
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
@@ -29,7 +37,7 @@ def create_player_ppt(player_name, season_goal):
     blank_slide_layout = prs.slide_layouts[6]
     slide = prs.slides.add_slide(blank_slide_layout)
 
-    # Nimi-otsikko
+    # Nimi (Vasen yläkulma)
     txBox = slide.shapes.add_textbox(
         Inches(0.6), Inches(0.4), Inches(5.0), Inches(1.2)
     )
@@ -40,11 +48,11 @@ def create_player_ppt(player_name, season_goal):
     p1.font.size = Pt(22)
 
     p2 = tf.add_paragraph()
-    p2.text = player_name
+    p2.text = str(player_name)
     p2.font.size = Pt(26)
     p2.font.bold = True
 
-    # Athletes reflections
+    # Athletes reflections (Oikea yläkulma)
     txBox_refl = slide.shapes.add_textbox(
         Inches(8.5), Inches(0.8), Inches(4.5), Inches(1.5)
     )
@@ -61,11 +69,11 @@ def create_player_ppt(player_name, season_goal):
     p_r2.font.size = Pt(14)
 
     p_r3 = tf_refl.add_paragraph()
-    p_r3.text = "Season:"
+    p_r3.text = f"Season: {season_goal}"
     p_r3.font.size = Pt(14)
 
-    # Punaisen laatikon apufunktio
-    def add_red_box(left, top, width, height, title, content_list):
+    # Punaisen laatikon luontiapuri
+    def add_red_box(left, top, width, height, title, content_text):
         shape = slide.shapes.add_shape(1, left, top, width, height)
         shape.fill.solid()
         shape.fill.fore_color.rgb = RGBColor(179, 0, 0)
@@ -81,48 +89,32 @@ def create_player_ppt(player_name, season_goal):
         p_title.font.color.rgb = RGBColor(255, 204, 0)
         p_title.alignment = PP_ALIGN.CENTER
 
-        for item in content_list:
-            p_item = tf.add_paragraph()
-            p_item.text = str(item)
-            p_item.font.size = Pt(13)
-            p_item.font.color.rgb = RGBColor(255, 255, 255)
-            p_item.alignment = PP_ALIGN.CENTER
+        p_item = tf.add_paragraph()
+        p_item.text = str(content_text)
+        p_item.font.size = Pt(12)
+        p_item.font.color.rgb = RGBColor(255, 255, 255)
+        p_item.alignment = PP_ALIGN.CENTER
 
-    # Elementtien sijoittelu
+    # Piirretään laatikot pelaajan omilla vastauksilla
     add_red_box(
         Inches(4.1),
         Inches(0.8),
         Inches(3.8),
         Inches(1.5),
         "Dream goals",
-        ["Career:", f"Season: {season_goal}"],
+        f"Season: {season_goal}",
     )
 
     add_red_box(
-        Inches(1.8),
-        Inches(2.7),
-        Inches(3.6),
-        Inches(1.3),
-        "Offensive zone",
-        ["Efficiency"],
+        Inches(1.8), Inches(2.7), Inches(3.6), Inches(1.3), "Offensive zone", off_zone
     )
 
     add_red_box(
-        Inches(5.8),
-        Inches(2.7),
-        Inches(3.8),
-        Inches(1.3),
-        "Defensive zone",
-        ["Defending in own zone", "(comprehensive)"],
+        Inches(5.8), Inches(2.7), Inches(3.8), Inches(1.3), "Defensive zone", def_zone
     )
 
     add_red_box(
-        Inches(1.2),
-        Inches(4.7),
-        Inches(3.4),
-        Inches(1.3),
-        "Mental",
-        ["Emotional control", "Handling failure"],
+        Inches(1.2), Inches(4.7), Inches(3.4), Inches(1.3), "Mental", mental
     )
 
     add_red_box(
@@ -131,34 +123,19 @@ def create_player_ppt(player_name, season_goal):
         Inches(3.6),
         Inches(1.3),
         "Weekly Process",
-        ["6x ice+off-ice training", "1-2 games per week"],
+        "6x ice+off-ice training\n1-2 games per week",
     )
 
     add_red_box(
-        Inches(0.8),
-        Inches(6.3),
-        Inches(2.6),
-        Inches(1.0),
-        "Technical",
-        ["Skating versatility"],
+        Inches(0.8), Inches(6.3), Inches(2.6), Inches(1.0), "Technical", technical
     )
 
     add_red_box(
-        Inches(3.7),
-        Inches(6.3),
-        Inches(2.6),
-        Inches(1.0),
-        "Tactical",
-        ["Special teams play"],
+        Inches(3.7), Inches(6.3), Inches(2.6), Inches(1.0), "Tactical", tactical
     )
 
     add_red_box(
-        Inches(6.6),
-        Inches(6.3),
-        Inches(2.6),
-        Inches(1.0),
-        "Off-ice",
-        ["Mobility & Speed"],
+        Inches(6.6), Inches(6.3), Inches(2.6), Inches(1.0), "Off-ice", off_ice
     )
 
     add_red_box(
@@ -167,7 +144,7 @@ def create_player_ppt(player_name, season_goal):
         Inches(2.8),
         Inches(1.0),
         "Training (daily)",
-        ["Daily theme"],
+        daily_train,
     )
 
     binary_output = BytesIO()
@@ -176,9 +153,8 @@ def create_player_ppt(player_name, season_goal):
     return binary_output
 
 
-# Tallennetaan funktio session_stateen
+# Tallennettaan funktio muistiin
 st.session_state["create_player_ppt"] = create_player_ppt
-
 
 try:
     df = load_data()
@@ -192,7 +168,7 @@ try:
 
     st.sidebar.title("🏒 Luleå/MSSK Profiles")
 
-    # Team Filter
+    # Joukkueen valinta
     teams = ["All Teams"] + [
         t
         for t in df[team_col].dropna().unique()
@@ -205,7 +181,7 @@ try:
     else:
         df_filtered = df
 
-    # Player Filter
+    # Pelaajan valinta
     players = [
         p
         for p in df_filtered[name_col].unique()
@@ -217,7 +193,7 @@ try:
     st.session_state["name_col"] = name_col
     st.session_state["team_col"] = team_col
 
-    # Navigation structure
+    # Navigaatiosivut
     overview_page = st.Page(
         "pages/1_overview.py", title="Overview & Player Info", icon="👤"
     )
