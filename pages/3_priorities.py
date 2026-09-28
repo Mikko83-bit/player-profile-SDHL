@@ -13,7 +13,7 @@ if df is not None and selected_player:
 
         st.title(f"🎯 {selected_player} — Development & Goals")
 
-        # --- Game With Puck / Without Puck ---
+        # --- 1. Game With Puck / Without Puck ---
         col_puck, col_no_puck = st.columns(2)
 
         puck_col = [
@@ -45,36 +45,37 @@ if df is not None and selected_player:
 
         st.divider()
 
-        # --- Strengths & Areas to Develop ---
-        # Tässä haetaan ruotsinkielisistä sarakkeista ja näytetään englanniksi!
+        # --- 2. Strengths & Areas to Develop (Tapa 1: Haetaan sarakkeista AT ja AU) ---
         st.subheader("⭐ Strengths & Areas to Develop")
         col_good, col_dev = st.columns(2)
 
-        good_col = [c for c in df.columns if "vad gör du bra" in str(c).lower()]
-        dev_col = [c for c in df.columns if "vad behöver du utveckla" in str(c).lower()]
+        # Excelin sarake AT on indeksi 45 (A=0, Z=25, AA=26, AT=45)
+        # Oletetaan "Vad gör du bra?" = AT (45) ja "Vad behöver du utveckla?" = AU (46)
+        COL_AT_INDEX = 45
+
+        val_good = p.iloc[COL_AT_INDEX] if len(p) > COL_AT_INDEX else "-"
+        val_dev = p.iloc[COL_AT_INDEX + 1] if len(p) > (COL_AT_INDEX + 1) else "-"
 
         with col_good:
             st.write("**What You Do Well:**")
-            val_good = p.get(good_col[0], "-") if good_col else "-"
             st.write(
                 f"> {val_good if pd.notna(val_good) and str(val_good).strip() not in ['nan', ''] else '-'}"
             )
 
         with col_dev:
             st.write("**What You Need to Develop:**")
-            val_dev = p.get(dev_col[0], "-") if dev_col else "-"
             st.write(
                 f"> {val_dev if pd.notna(val_dev) and str(val_dev).strip() not in ['nan', ''] else '-'}"
             )
 
         st.divider()
 
-        # --- Feedback, Challenges & Season Goal ---
+        # --- 3. Feedback, Challenges & Season Goal ---
         st.subheader("💬 Feedback, Challenges & Season Goal")
 
         col_left, col_right = st.columns(2)
 
-        # Hakuehdot joustavaksi, niin löytää myös kysymysmerkit ja monikot
+        # Etsitään muut sarakkeet turvallisesti hakusanoilla
         utmaning_col = [c for c in df.columns if "utmaningar" in str(c).lower()]
         mottaglig_col = [c for c in df.columns if "mottaglig" in str(c).lower()]
         feedback_col = [c for c in df.columns if "negativ och positiv" in str(c).lower()]
