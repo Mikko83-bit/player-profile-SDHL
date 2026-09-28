@@ -40,7 +40,6 @@ if df is not None and selected_player:
             st.subheader("PLAYER INFORMATION")
             st.write(f"**Name:** {selected_player}")
 
-            # Haetaan numero turvallisesti
             num_val = (
                 p.iloc[1]
                 if len(p) > 1 and pd.notna(p.iloc[1])
@@ -52,7 +51,6 @@ if df is not None and selected_player:
             st.divider()
             st.subheader("🎯 Season Goal")
 
-            # Kauden tavoite kyselystä (sarake 46/47)
             goal_val = (
                 p.iloc[46]
                 if len(p) > 46 and pd.notna(p.iloc[46])
@@ -64,65 +62,78 @@ if df is not None and selected_player:
         with col_radar:
             st.subheader("📊 Self-Assessment Radar")
 
-            # Määritetään osa-alueet ja niitä vastaavat sarakeindeksit
-            categories = {
-                "Skating": 2,
-                "Shooting": 5,
-                "Puck Control": 8,
-                "Hockey Sense": 11,
-                "Passing": 14,
-                "Defense": 17,
-                "Offense": 20,
-                "Physical Play": 23,
-                "Team System": 26,
+            # Määritetään kategoriat ja etsitään oikea sarake otsikon perusteella
+            # Kokeillaan sekä englannin- että ruotsinkielisiä hakusanoja sarakkeista
+            categories_search = {
+                "Skating": ["skating", "skridskoåkning"],
+                "Shooting": ["shot", "skott"],
+                "Puck Control": [
+                    "puck handling",
+                    "puckkontroll",
+                    "puckföring",
+                ],
+                "Hockey Sense": ["game sense", "spelförståelse"],
+                "Passing": ["passing", "passning"],
+                "Defense": ["defensive play", "försvarsspelet"],
+                "Offense": ["offensive play", "anfallsspelet"],
+                "Physical Play": ["physical play", "fysiska spelet"],
+                "Team System": ["playbook", "spelsystemet"],
             }
 
-            labels = list(categories.keys())
+            labels = list(categories_search.keys())
             player_scores = []
             team_averages = []
 
-            for cat_name, col_idx in categories.items():
-                # 1. Pelaajan oma arvo
-                val = p.iloc[col_idx] if len(p) > col_idx else None
-                try:
-                    p_score = float(val) if pd.notna(val) else 5.0
-                except (ValueError, TypeError):
-                    p_score = 5.0
-                player_scores.append(p_score)
+            for cat_name, keywords in categories_search.items():
+                # Etsitään oikea sarake df:stä hakusanojen avulla
+                matched_col = None
+                for col in df.columns:
+                    col_str = str(col).lower()
+                    if any(kw in col_str for kw in keywords):
+                        matched_col = col
+                        break
 
-                # 2. U19D Joukkueen keskiarvo sarakeindeksistä
-                try:
-                    col_data = pd.to_numeric(
-                        df.iloc[:, col_idx], errors="coerce"
-                    )
-                    team_avg = col_data.mean()
-                    if pd.isna(team_avg):
-                        team_avg = 5.0
-                except Exception:
-                    team_avg = 5.0
-                team_averages.append(round(team_avg, 2))
+                if matched_col is not None:
+                    # Pelaajan oma arvo
+                    val = p.get(matched_col)
+                    try:
+                        p_score = float(val) if pd.notna(val) else 5.0
+                    except (ValueError, TypeError):
+                        p_score = 5.0
+
+                    # Koko joukkueen puhtaat numeeriset arvot ja keskiarvo
+                    col_numeric = pd.to_numeric(
+                        df[matched_col], errors="coerce"
+                    ).dropna()
+                    t_avg = col_numeric.mean() if not col_numeric.empty else 5.0
+                else:
+                    p_score = 5.0
+                    t_avg = 5.0
+
+                player_scores.append(round(p_score, 1))
+                team_averages.append(round(t_avg, 2))
 
             # Suljetaan ympyrä Plotly-tutkakaaviota varten
             labels_closed = labels + [labels[0]]
             player_scores_closed = player_scores + [player_scores[0]]
             team_averages_closed = team_averages + [team_averages[0]]
 
-            # Luodaan Plotly-graafi kahdella eri tasolla
+            # Luodaan Plotly-graafi
             fig = go.Figure()
 
-            # Joukkueen keskiarvo (U19D) - Katkoviiva / Harmaa alue
+            # 1. Koko U19D-joukkueen keskiarvo (Harmaa täyttö + katkoviiva)
             fig.add_trace(
                 go.Scatterpolar(
                     r=team_averages_closed,
                     theta=labels_closed,
                     fill="toself",
                     name="U19D Average",
-                    line=dict(color="#888888", dash="dash"),
-                    fillcolor="rgba(180, 180, 180, 0.2)",
+                    line=dict(color="#4A90E2", width=2, dash="dash"),
+                    fillcolor="rgba(74, 144, 226, 0.25)",
                 )
             )
 
-            # Pelaajan omat pisteet - Punainen
+            # 2. Valitun pelaajan omat pisteet (Punainen täyttö + paksu viiva)
             fig.add_trace(
                 go.Scatterpolar(
                     r=player_scores_closed,
@@ -130,17 +141,27 @@ if df is not None and selected_player:
                     fill="toself",
                     name=selected_player,
                     line=dict(color="#E30613", width=3),
-                    fillcolor="rgba(227, 6, 19, 0.4)",
+                    fillcolor="rgba(227, 6, 19, 0.45)",
                 )
             )
 
             fig.update_layout(
                 polar=dict(
-                    radialaxis=dict(visible=True, range=[0, 10], dtick=2)
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, 10],
+                        dtick=2,
+                        gridcolor="#444444",
+                    ),
+                    angularaxis=dict(gridcolor="#444444"),
                 ),
                 showlegend=True,
                 legend=dict(
-                    orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5
+                    orientation="h",
+                    yanchor="bottom",
+                    y=-0.25,
+                    xanchor="center",
+                    x=0.5,
                 ),
                 margin=dict(l=40, r=40, t=20, b=40),
             )
